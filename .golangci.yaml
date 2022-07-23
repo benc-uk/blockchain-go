@@ -1,0 +1,13 @@
+linters:
+  enable:
+    - revive
+    - gofmt
+    - gosec
+    - wsl
+    - stylecheck
+    - nosnakecase
+    - misspell
+
+linters-settings:
+  misspell:
+    locale: UK

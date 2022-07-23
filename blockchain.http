@@ -1,0 +1,43 @@
+#########################################################
+### List contents of the chain
+#########################################################
+GET http://localhost:8080/chain
+
+
+#########################################################
+### Add a transaction to the chain
+#########################################################
+# @name addTransaction
+POST http://localhost:8080/block
+
+{
+  "sender": "David Bowie",
+  "recipient": "Lou Reed",
+  "amount": {{$randomInt 10 370}}
+}
+
+@hash = {{addTransaction.response.body.hash}}
+
+
+#########################################################
+### Get a block
+#########################################################
+GET http://localhost:8080/block/{{hash}}
+
+
+#########################################################
+### Mess with a block and tamper the data
+#########################################################
+PUT http://localhost:8080/block/tamper/{{hash}}
+
+
+#########################################################
+### Check single block integrity
+#########################################################
+GET http://localhost:8080/block/validate/{{hash}}
+
+
+#########################################################
+### Check whole chain integrity
+#########################################################
+GET http://localhost:8080/chain/validate

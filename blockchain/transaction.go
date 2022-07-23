@@ -11,6 +11,7 @@ type Transaction struct {
 	Amount    float64
 }
 
+// Add transaction to the block chain
 func (c *Chain) AddTransaction(sender string, recp string, amount float64) string {
 	t := Transaction{
 		Sender:    sender,
@@ -22,13 +23,16 @@ func (c *Chain) AddTransaction(sender string, recp string, amount float64) strin
 	return c.AddBlock(string(jsonString))
 }
 
+// String representation of a transaction
 func (t *Transaction) String() string {
 	return fmt.Sprintf("%s -> %s: %.2f", t.Sender, t.Recipient, t.Amount)
 }
 
+// Check transaction validity
 func (t *Transaction) Validate() bool {
 	if t.Sender == "" || t.Recipient == "" || t.Amount <= 0 {
 		return false
 	}
+
 	return true
 }
