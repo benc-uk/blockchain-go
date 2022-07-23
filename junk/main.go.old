@@ -1,0 +1,41 @@
+package main
+
+import (
+	"blockchain-go/blockchain"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/davecgh/go-spew/spew"
+)
+
+func main() {
+	if os.Args == nil || len(os.Args) < 2 {
+		printUsage()
+		os.Exit(0)
+	}
+
+	chain := blockchain.NewChain(2)
+
+	action := os.Args[1]
+	switch action {
+	case "add":
+		sender := flag.String("s", "", "sender")
+		recipient := flag.String("r", "", "recipient")
+		amount := flag.Float64("a", 0, "amount")
+		flag.CommandLine.Parse(os.Args[2:])
+		chain.AddTransaction(*sender, *recipient, *amount)
+	case "print":
+		// foo
+	default:
+		printUsage()
+	}
+
+	spew.Dump(chain)
+}
+
+func printUsage() {
+	fmt.Println("Usage: ./blockchain [action]")
+	fmt.Println(" add <sender> <recipient> <amount> - add a new transaction to the chain")
+	fmt.Println(" print - print the chain")
+}

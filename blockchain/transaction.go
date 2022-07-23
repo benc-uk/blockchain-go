@@ -1,6 +1,9 @@
 package blockchain
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Transaction struct {
 	Sender    string
@@ -8,7 +11,7 @@ type Transaction struct {
 	Amount    float64
 }
 
-func (c *Chain) AddTransaction(sender string, recp string, amount float64) {
+func (c *Chain) AddTransaction(sender string, recp string, amount float64) string {
 	t := Transaction{
 		Sender:    sender,
 		Recipient: recp,
@@ -16,5 +19,16 @@ func (c *Chain) AddTransaction(sender string, recp string, amount float64) {
 	}
 	jsonString, _ := json.Marshal(t)
 
-	c.AddBlock(string(jsonString))
+	return c.AddBlock(string(jsonString))
+}
+
+func (t *Transaction) String() string {
+	return fmt.Sprintf("%s -> %s: %.2f", t.Sender, t.Recipient, t.Amount)
+}
+
+func (t *Transaction) Validate() bool {
+	if t.Sender == "" || t.Recipient == "" || t.Amount <= 0 {
+		return false
+	}
+	return true
 }

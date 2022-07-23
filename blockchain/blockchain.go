@@ -36,7 +36,7 @@ func (c *Chain) SetDifficulty(d int) {
 	c.diff = d
 }
 
-func (c *Chain) AddBlock(data string) {
+func (c *Chain) AddBlock(data string) string {
 	b := Block{
 		Timestamp:    time.Now(),
 		Hash:         "123456789ABCDEF",
@@ -47,6 +47,8 @@ func (c *Chain) AddBlock(data string) {
 
 	b.proofOfWork(c.diff)
 	c.blocks = append(c.blocks, b)
+
+	return b.Hash
 }
 
 func newGenesisBlock(diff int) Block {
