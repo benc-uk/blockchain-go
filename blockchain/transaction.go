@@ -12,7 +12,7 @@ type Transaction struct {
 }
 
 // Add transaction to the block chain
-func (c *Chain) AddTransaction(sender string, recp string, amount float64) string {
+func (c *Chain) AddTransaction(sender string, recp string, amount float64) (string, error) {
 	t := Transaction{
 		Sender:    sender,
 		Recipient: recp,

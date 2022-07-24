@@ -38,15 +38,35 @@ func main() {
 		ReadHeaderTimeout: 25 * time.Second,
 	}
 
-	chain = blockchain.NewChain(2)
+	var err error
+	chain, err = blockchain.NewChain(5)
+
+	if err != nil {
+		log.Fatalf("Could not create or open chain, %v !", err)
+	}
 
 	log.Println("### Mini Blockchain API listening on port", port)
 	log.Fatal(srv.ListenAndServe())
 }
 
 func listChain(w http.ResponseWriter, r *http.Request) {
-	blocks := chain.GetBlocks()
-	_ = json.NewEncoder(w).Encode(blocks)
+	blocks, err := chain.GetBlocks()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type listResult struct {
+		Blocks     []blockchain.Block
+		LastHash   string
+		Difficulty int
+	}
+
+	_ = json.NewEncoder(w).Encode(listResult{
+		Blocks:     blocks,
+		LastHash:   chain.GetLastHash(),
+		Difficulty: chain.Difficulty,
+	})
 }
 
 func addTransaction(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +83,12 @@ func addTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash := chain.AddTransaction(transaction.Sender, transaction.Recipient, transaction.Amount)
+	hash, err := chain.AddTransaction(transaction.Sender, transaction.Recipient, transaction.Amount)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	log.Println("### Added transaction:", transaction.String())
 
 	w.WriteHeader(http.StatusOK)
@@ -75,9 +100,9 @@ func tamper(w http.ResponseWriter, r *http.Request) {
 	hash := vars["hash"]
 	log.Println("### Tampering with block", hash)
 
-	b := chain.FindBlock(hash)
-	if b == nil {
-		http.Error(w, "Block not found", http.StatusNotFound)
+	b, err := chain.Get(hash)
+	if err != nil {
+		http.Error(w, "Block not found: "+err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -89,9 +114,9 @@ func validateBlock(w http.ResponseWriter, r *http.Request) {
 	hash := vars["hash"]
 	log.Println("### Validating block", hash)
 
-	b := chain.FindBlock(hash)
-	if b == nil {
-		http.Error(w, "Block not found", http.StatusNotFound)
+	b, err := chain.Get(hash)
+	if err != nil {
+		http.Error(w, "Block not found: "+err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -106,13 +131,13 @@ func validateBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateChain(w http.ResponseWriter, r *http.Request) {
-	ok, block := chain.Validate()
+	ok, blockErr := chain.Validate()
 	if ok {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
 	} else {
 		w.WriteHeader(http.StatusNotAcceptable)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "INTEGRITY ERROR", "block_hash": block.Hash})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "INTEGRITY ERROR", "block_hash": blockErr.Hash})
 	}
 }
 
@@ -120,9 +145,9 @@ func get(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 
-	b := chain.FindBlock(hash)
-	if b == nil {
-		http.Error(w, "Block not found", http.StatusNotFound)
+	b, err := chain.Get(hash)
+	if err != nil {
+		http.Error(w, "Block not found: "+err.Error(), http.StatusNotFound)
 		return
 	}
 

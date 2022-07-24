@@ -1,18 +1,22 @@
-# Blockchain Learning in Go
+# 🏋️ Blockchain Learning in Go
 
 A trivial blockchain with a REST API
 
 - Based on Proof of Work PoW hashing
-- No persistence
-- Doesn't really do anything
+- Data persistence of the blockchain using [BoltDB](https://github.com/etcd-io/bbolt) and [gob encoding](https://pkg.go.dev/encoding/gob)
+- Mock transaction system
 
-# Blockchain Implementation
+# 🔗 Blockchain Implementation
 
-See [blockchain/base.go](./blockchain/base.go)
+See:
 
-# Running Locally
+- [blockchain/block.go](./blockchain/block.go)
+- [blockchain/chain.go](./blockchain/chain.go)
+
+# 🏃‍♂️ Running Locally
 
 Use the makefile :)
+
 ```
 make run
 ```
@@ -27,7 +31,7 @@ lint-fix             🔍 Lint & format, will try to fix errors and modify code
 run                  🏃 Run application, used for local development
 ```
 
-# API
+# 🌐 API
 
 The API is RESTful and supports the following operations
 
