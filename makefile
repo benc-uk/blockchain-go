@@ -36,5 +36,4 @@ run: ## 🏃 Run application locally, with hot reload
 clean: ## 💣 Clean up, database and temp files
 	@figlet $@ || true
 	@rm -rf ./tmp/*
-	@rm -rf ./bin/*
 	@rm -rf ./*.db

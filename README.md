@@ -53,7 +53,6 @@ type Block struct {
 	PreviousHash string
 	Data         string
 	Nonce        int
-	Index        int
 }
 
 type Transaction struct {

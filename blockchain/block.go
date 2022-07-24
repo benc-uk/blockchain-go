@@ -66,6 +66,9 @@ func (b *Block) String() string {
 		b.Timestamp, b.PreviousHash, b.Data, b.Nonce, b.Hash)
 }
 
+//
+// Encodes the block as gob and returns the bytes
+//
 func (b *Block) Encode() []byte {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)

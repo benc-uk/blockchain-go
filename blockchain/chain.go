@@ -117,8 +117,6 @@ func (c *Chain) GetBlocks() ([]Block, error) {
 // AddBlock adds a block to the chain with the given data
 //
 func (c *Chain) AddBlock(data string) (string, error) {
-	log.Println("Adding block c.last is ", c.last)
-
 	b := Block{
 		Timestamp:    time.Now().UTC(),
 		Hash:         "FFFFFFFFFFFFFFF", // initial hash, will be overwritten
@@ -155,6 +153,8 @@ func (c *Chain) AddBlock(data string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	log.Println("Added block:", b.Hash)
 
 	return b.Hash, nil
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"blockchain-go/blockchain"
@@ -19,6 +20,11 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	diff := os.Getenv("CHAIN_DIFFICULTY")
+	if diff == "" {
+		diff = "3"
 	}
 
 	r := mux.NewRouter()
@@ -39,7 +45,9 @@ func main() {
 	}
 
 	var err error
-	chain, err = blockchain.NewChain(5)
+
+	diffInt, _ := strconv.Atoi(diff)
+	chain, err = blockchain.NewChain(diffInt)
 
 	if err != nil {
 		log.Fatalf("Could not create or open chain, %v !", err)
@@ -77,6 +85,8 @@ func addTransaction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	log.Println("### Adding transaction", transaction)
 
 	if !transaction.Validate() {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
