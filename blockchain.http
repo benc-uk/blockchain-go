@@ -5,18 +5,20 @@ GET http://localhost:8080/chain
 
 
 #########################################################
-### Add a transaction to the chain
+### Add a MINED block to the chain
 #########################################################
 # @name addTransaction
 POST http://localhost:8080/block
 
 {
-  "sender": "David Bowie",
-  "recipient": "Lou Reed",
-  "amount": {{$randomInt 10 370}}
+  "timestamp": "2022-07-25T13:44:39.782598643Z",
+  "data": "{\"Sender\":\"Jim Morrison\",\"Recipient\":\"Tony Iommi\",\"Amount\":34.66}",
+  "hash": "000009168a4b4ab06b2adb580d934a66f6c521422be501e49ecde27302506f2d",
+  "nonce": 538319,
+  "previousHash": "fffffff"
 }
 
-@hash = {{addTransaction.response.body.hash}}
+@hash = {{addTransaction.response.body.Hash}}
 
 
 #########################################################
@@ -26,9 +28,9 @@ GET http://localhost:8080/block/{{hash}}
 
 
 #########################################################
-### Mess with a block and tamper the data
+### Tamper with the data of a given block
 #########################################################
-PUT http://localhost:8080/block/tamper/{{hash}}
+PUT http://localhost:8080/block/tamper/000009168a4b4ab06b2adb580d934a66f6c521422be501e49ecde27302506f2d
 
 
 #########################################################

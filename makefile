@@ -7,7 +7,7 @@ REPO_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 GOLINT_PATH := $(REPO_DIR)/bin/golangci-lint
 AIR_PATH := $(REPO_DIR)/bin/air
 
-.PHONY: help install-tools build run lint lint-fix
+.PHONY: help get-tools run-server build-server build-client lint lint-fix clean
 .DEFAULT_GOAL := help
 
 help: ## 💬 This help message :)
@@ -29,11 +29,20 @@ lint-fix: ## 🔍 Lint & format, will try to fix errors and modify code
 	@$(GOLINT_PATH) > /dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh
 	$(GOLINT_PATH) run ./... --fix
 
-run: ## 🏃 Run application locally, with hot reload
+run-server: ## 🏃 Run server API locally, with hot reload
 	@figlet $@ || true
 	$(AIR_PATH) -c .air.toml
 
-clean: ## 💣 Clean up, database and temp files
+build-server: ## 🔨 Build server API, resulting binary in out/blockchain-api
+	@figlet $@ || true
+	go build -o out/blockchain-api api/main.go
+
+build-client: ## 🔨 Build client command line tool, resulting binary in out/blockchain
+	@figlet $@ || true
+	go build -o out/blockchain client/main.go 
+
+clean: ## 🧹 Clean up; database, binaries & temp files
 	@figlet $@ || true
 	@rm -rf ./tmp/*
+	@rm -rf ./out/*
 	@rm -rf ./*.db

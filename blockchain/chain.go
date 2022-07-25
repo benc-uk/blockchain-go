@@ -5,9 +5,9 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
-	"time"
 
 	//"github.com/boltdb/bolt"
+
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -114,25 +114,32 @@ func (c *Chain) GetBlocks() ([]Block, error) {
 }
 
 //
-// AddBlock adds a block to the chain with the given data
+// AddBlock adds a mined block to the chain, checking the block first
 //
-func (c *Chain) AddBlock(data string) (string, error) {
-	b := Block{
-		Timestamp:    time.Now().UTC(),
-		Hash:         "FFFFFFFFFFFFFFF", // initial hash, will be overwritten
-		PreviousHash: c.last,
-		Data:         data,
-		Nonce:        0,
+func (c *Chain) AddBlock(b *Block) error {
+	// count leading zeros
+	zeros := 0
+
+	for _, v := range b.Hash {
+		if v == '0' {
+			zeros++
+		} else {
+			break
+		}
 	}
 
-	// Calculate the hash of the block
-	b.proofOfWork(c.Difficulty)
+	// Check the hash of the block
+	if b.CalculateHash() != b.Hash {
+		return fmt.Errorf("block hash does not match")
+	}
 
-	// Incase another block is added while we are adding this one
-	b.PreviousHash = c.last
-	b.Hash = b.calculateHash()
+	// Validate the block's hash difficulty
+	if zeros < c.Difficulty {
+		return fmt.Errorf("block not fully mined to current difficulty")
+	}
 
 	// Write the block to the db
+	b.PreviousHash = c.last
 	err := c.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("blocks"))
 
@@ -151,12 +158,12 @@ func (c *Chain) AddBlock(data string) (string, error) {
 	})
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	log.Println("Added block:", b.Hash)
+	log.Printf("Added block:\n%s", b.String())
 
-	return b.Hash, nil
+	return nil
 }
 
 //
@@ -188,7 +195,7 @@ func (c *Chain) Get(hash string) (*Block, error) {
 
 //
 // UpdateBlock updates the data of the block,
-// WITHOUT updating the hashes - this leads to a broken chain
+// WITHOUT updating the hashes - this leads to an invalid chain
 //
 func (c *Chain) UpdateBlock(b Block, newData string) {
 	b.Data = newData
@@ -219,12 +226,13 @@ func (c *Chain) Validate() (bool, *Block) {
 		return false, nil
 	}
 
-	for i := 1; i < len(blocks); i++ {
-		if !blocks[i].Validate(*c) {
-			if blocks[i].PreviousHash == "" {
-				continue
-			}
+	for i := 0; i < len(blocks); i++ {
+		// Skip the genesis block
+		if blocks[i].PreviousHash == "" {
+			continue
+		}
 
+		if !blocks[i].Validate(*c) {
 			return false, &blocks[i]
 		}
 	}

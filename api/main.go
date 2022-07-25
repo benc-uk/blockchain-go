@@ -24,14 +24,15 @@ func main() {
 
 	diff := os.Getenv("CHAIN_DIFFICULTY")
 	if diff == "" {
-		diff = "3"
+		diff = "5"
 	}
 
 	r := mux.NewRouter()
 	r.Use(commonMiddleware)
 	r.HandleFunc("/chain", listChain)
+	r.HandleFunc("/chain/difficulty", getDifficulty)
 	r.HandleFunc("/chain/validate", validateChain)
-	r.HandleFunc("/block", addTransaction).Methods("POST")
+	r.HandleFunc("/block", add).Methods("POST")
 	r.HandleFunc("/block/{hash}", get)
 	r.HandleFunc("/block/tamper/{hash}", tamper).Methods("PUT")
 	r.HandleFunc("/block/validate/{hash}", validateBlock)
@@ -53,7 +54,7 @@ func main() {
 		log.Fatalf("Could not create or open chain, %v !", err)
 	}
 
-	log.Println("### Mini Blockchain API listening on port", port)
+	log.Println("### Blockchain API listening on port", port)
 	log.Fatal(srv.ListenAndServe())
 }
 
@@ -77,32 +78,31 @@ func listChain(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func addTransaction(w http.ResponseWriter, r *http.Request) {
-	var transaction blockchain.Transaction
+func add(w http.ResponseWriter, r *http.Request) {
+	var block blockchain.Block
 
-	err := json.NewDecoder(r.Body).Decode(&transaction)
+	err := json.NewDecoder(r.Body).Decode(&block)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	log.Println("### Adding transaction", transaction)
+	if err = block.ValidateSimple(); err != nil {
+		log.Println("### Error adding block", err)
+		http.Error(w, "Invalid block payload "+err.Error(), http.StatusBadRequest)
 
-	if !transaction.Validate() {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	hash, err := chain.AddTransaction(transaction.Sender, transaction.Recipient, transaction.Amount)
+	err = chain.AddBlock(&block)
 	if err != nil {
+		log.Println("### Error adding block", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
-	log.Println("### Added transaction:", transaction.String())
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ADDED", "hash": hash})
+	_ = json.NewEncoder(w).Encode(block)
 }
 
 func tamper(w http.ResponseWriter, r *http.Request) {
@@ -146,6 +146,7 @@ func validateChain(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
 	} else {
+		log.Println("### Chain integrity error, invalid block found: ", blockErr)
 		w.WriteHeader(http.StatusNotAcceptable)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "INTEGRITY ERROR", "block_hash": blockErr.Hash})
 	}
@@ -162,6 +163,10 @@ func get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = json.NewEncoder(w).Encode(b)
+}
+
+func getDifficulty(w http.ResponseWriter, r *http.Request) {
+	_ = json.NewEncoder(w).Encode(map[string]int{"difficulty": chain.Difficulty})
 }
 
 func commonMiddleware(next http.Handler) http.Handler {

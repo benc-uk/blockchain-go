@@ -11,16 +11,19 @@ type Transaction struct {
 	Amount    float64
 }
 
-// Add transaction to the block chain
-func (c *Chain) AddTransaction(sender string, recp string, amount float64) (string, error) {
+func NewTransactionBlock(sender string, recp string, amount float64) (*Block, error) {
 	t := Transaction{
 		Sender:    sender,
 		Recipient: recp,
 		Amount:    amount,
 	}
-	jsonString, _ := json.Marshal(t)
 
-	return c.AddBlock(string(jsonString))
+	jsonString, err := json.Marshal(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewBlock(string(jsonString)), nil
 }
 
 // String representation of a transaction
