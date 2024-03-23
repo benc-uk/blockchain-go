@@ -1,9 +1,9 @@
-name: Example for golangci-lint
+name: Run linting
 on:
   push:
   
 jobs:
-  example:
+  linting:
     name: Run linting
     runs-on: ubuntu-latest
     steps:
